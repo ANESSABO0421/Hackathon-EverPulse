@@ -6,6 +6,7 @@ import connectDB from "./configs/db.js";
 import doctorRoutes from "./routes/doctorRoutes.js";
 import patientRoutes from "./routes/patientRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
+import appointmentRouter from "./routes/appointmentRoutes.js";
 
 dotenv.config();
 connectDB();
@@ -17,6 +18,7 @@ app.use(express.json());
 app.use("/api/doctors", doctorRoutes);
 app.use("/api/patients", patientRoutes);
 app.use("/api/admins", adminRoutes);
+app.use("/api/appointments",appointmentRouter);
 
 app.get("/", (req, res) => res.send("🚀 API is running successfully!"));
 
