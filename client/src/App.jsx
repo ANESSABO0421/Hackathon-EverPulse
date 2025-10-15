@@ -8,9 +8,9 @@ import DoctorSignup from "./pages/DoctorSignup";
 import AdminSignup from "./pages/AdminSignup";
 import PatientSignup from "./pages/PatientSignup";
 import { ToastContainer } from "react-toastify";
-import AdminDashboard from "./pages/dashboard/AdminDashboard";
 import DoctorDashboard from "./pages/dashboard/DoctorDashboard";
 import PatientDashboard from "./pages/dashboard/PatientDashboard";
+import AdminDashboard from "./pages/dashboard/Admin/AdminDashboard";
 
 const App = () => {
   return (
