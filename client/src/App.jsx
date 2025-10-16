@@ -8,7 +8,7 @@ import DoctorSignup from "./pages/DoctorSignup";
 import AdminSignup from "./pages/AdminSignup";
 import PatientSignup from "./pages/PatientSignup";
 import { ToastContainer } from "react-toastify";
-import PatientDashboard from "./pages/dashboard/PatientDashboard";
+import PatientDashboard from "./pages/dashboard/patient/PatientDashboard";
 import AdminDashboard from "./pages/dashboard/Admin/AdminDashboard";
 import Overview from "./pages/dashboard/Admin/Overview";
 import ManageDoctors from "./pages/dashboard/Admin/ManageDoctors";
@@ -26,6 +26,12 @@ import DoctorRecords from "./pages/dashboard/Doctor/DoctorRecords";
 import DoctorAiInsights from "./pages/dashboard/Doctor/DoctorAiInsights";
 import DoctorMessages from "./pages/dashboard/Doctor/DoctorMessages";
 import DoctorSettings from "./pages/dashboard/Doctor/DoctorSettings";
+import PatientOverview from "./pages/dashboard/patient/PatientOverview";
+import PatientAppointments from "./pages/dashboard/patient/PatientAppointments";
+import PatientRecords from "./pages/dashboard/patient/PatientRecords";
+import PatientDoctors from "./pages/dashboard/patient/PatientDoctors";
+import PatientChat from "./pages/dashboard/patient/PatientChat";
+import PatientSettings from "./pages/dashboard/patient/PatientSettings";
 
 const App = () => {
   return (
@@ -51,7 +57,7 @@ const App = () => {
 
         {/* Doctor dashboard */}
         <Route path="/dashboard/doctor" element={<DoctorDashboard />}>
-          <Route index path="doctoroverview" element={<DoctorOverview/>} />
+          <Route index path="doctoroverview" element={<DoctorOverview />} />
           <Route path="doctorpatients" element={<DoctorPatients />} />
           <Route path="doctorappointments" element={<DoctorAppointments />} />
           <Route path="doctorrecords" element={<DoctorRecords />} />
@@ -60,7 +66,16 @@ const App = () => {
           <Route path="doctorsettings" element={<DoctorSettings />} />
         </Route>
 
-        <Route path="/dashboard/patient" element={<PatientDashboard />} />
+        {/* patient dashboard */}
+        <Route path="/dashboard/patient" element={<PatientDashboard />}>
+          <Route index element={<PatientOverview />} />
+          <Route path="overview" element={<PatientOverview/>} />
+          <Route path="appointments" element={<PatientAppointments />} />
+          <Route path="records" element={<PatientRecords />} />
+          <Route path="doctors" element={<PatientDoctors />} />
+          <Route path="chat" element={<PatientChat />} />
+          <Route path="settings" element={<PatientSettings />} />
+        </Route>
       </Routes>
       <ToastContainer
         position="top-right"
