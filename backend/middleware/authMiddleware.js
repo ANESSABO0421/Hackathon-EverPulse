@@ -17,7 +17,6 @@ export const authenticateUser = (req, res, next) => {
   }
 };
 
-
 export const authorizeRoles = (...allowedRoles) => {
   return (req, res, next) => {
     if (!req.user || !allowedRoles.includes(req.user.role)) {
@@ -26,3 +25,7 @@ export const authorizeRoles = (...allowedRoles) => {
     next();
   };
 };
+
+// Default export for backward compatibility
+const authMiddleware = authenticateUser;
+export default authMiddleware;
