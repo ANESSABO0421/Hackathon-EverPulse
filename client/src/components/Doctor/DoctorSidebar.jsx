@@ -19,13 +19,13 @@ export default function DoctorSidebar() {
   const [isOpen, setIsOpen] = useState(false);
 
   const menuItems = [
-    { name: "Overview", icon: <LayoutDashboard size={20} />, path: "overview" },
-    { name: "My Patients", icon: <Users size={20} />, path: "my-patients" },
-    { name: "Appointments", icon: <CalendarDays size={20} />, path: "appointments" },
-    { name: "Records", icon: <FileText size={20} />, path: "records" },
-    { name: "AI Insights", icon: <Brain size={20} />, path: "ai-insights" },
-    { name: "Messages", icon: <MessageSquare size={20} />, path: "messages" },
-    { name: "Settings", icon: <Settings size={20} />, path: "settings" },
+    { name: "Overview", icon: <LayoutDashboard size={20} />, path: "doctoroverview" },
+    { name: "My Patients", icon: <Users size={20} />, path: "doctorpatients" },
+    { name: "Appointments", icon: <CalendarDays size={20} />, path: "doctorappointments" },
+    { name: "Records", icon: <FileText size={20} />, path: "doctorrecords" },
+    { name: "AI Insights", icon: <Brain size={20} />, path: "doctorai-insights" },
+    { name: "Messages", icon: <MessageSquare size={20} />, path: "doctormessages" },
+    { name: "Settings", icon: <Settings size={20} />, path: "doctorsettings" },
   ];
 
   return (

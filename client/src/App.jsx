@@ -8,7 +8,6 @@ import DoctorSignup from "./pages/DoctorSignup";
 import AdminSignup from "./pages/AdminSignup";
 import PatientSignup from "./pages/PatientSignup";
 import { ToastContainer } from "react-toastify";
-import DoctorDashboard from "./pages/dashboard/DoctorDashboard";
 import PatientDashboard from "./pages/dashboard/PatientDashboard";
 import AdminDashboard from "./pages/dashboard/Admin/AdminDashboard";
 import Overview from "./pages/dashboard/Admin/Overview";
@@ -19,6 +18,14 @@ import Analytics from "./pages/dashboard/Admin/Analytics";
 import Feedback from "./pages/dashboard/Admin/Feedback";
 import Settings from "./pages/dashboard/Admin/Settings";
 import Appointment from "./pages/dashboard/Admin/Appointment";
+import DoctorDashboard from "./pages/dashboard/Doctor/DoctorDashboard";
+import DoctorOverview from "./pages/dashboard/Doctor/DoctorOverview";
+import DoctorPatients from "./pages/dashboard/Doctor/DoctorPatients";
+import DoctorAppointments from "./pages/dashboard/Doctor/DoctorAppointments";
+import DoctorRecords from "./pages/dashboard/Doctor/DoctorRecords";
+import DoctorAiInsights from "./pages/dashboard/Doctor/DoctorAiInsights";
+import DoctorMessages from "./pages/dashboard/Doctor/DoctorMessages";
+import DoctorSettings from "./pages/dashboard/Doctor/DoctorSettings";
 
 const App = () => {
   return (
@@ -43,8 +50,14 @@ const App = () => {
         </Route>
 
         {/* Doctor dashboard */}
-        <Route path="/dashboard/doctor" element={<DoctorDashboard />} >
-
+        <Route path="/dashboard/doctor" element={<DoctorDashboard />}>
+          <Route index path="doctoroverview" element={<DoctorOverview/>} />
+          <Route path="doctorpatients" element={<DoctorPatients />} />
+          <Route path="doctorappointments" element={<DoctorAppointments />} />
+          <Route path="doctorrecords" element={<DoctorRecords />} />
+          <Route path="doctorai-insights" element={<DoctorAiInsights />} />
+          <Route path="doctormessages" element={<DoctorMessages />} />
+          <Route path="doctorsettings" element={<DoctorSettings />} />
         </Route>
 
         <Route path="/dashboard/patient" element={<PatientDashboard />} />
