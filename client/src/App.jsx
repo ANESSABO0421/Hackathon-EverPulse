@@ -11,14 +11,14 @@ import { ToastContainer } from "react-toastify";
 import DoctorDashboard from "./pages/dashboard/DoctorDashboard";
 import PatientDashboard from "./pages/dashboard/PatientDashboard";
 import AdminDashboard from "./pages/dashboard/Admin/AdminDashboard";
-import Overview from "./components/admin/Overview";
-import ManageDoctors from "./components/admin/ManageDoctors";
-import ManagePatients from "./components/admin/ManagePatients";
-import MedicalRecords from "./components/admin/MedicalRecords";
-import Analytics from "./components/admin/Analytics";
-import Feedback from "./components/admin/Feedback";
-import Settings from "./components/admin/Settings";
-import Appointment from "./components/admin/Appointment";
+import Overview from "./pages/dashboard/Admin/Overview";
+import ManageDoctors from "./pages/dashboard/Admin/ManageDoctors";
+import ManagePatients from "./pages/dashboard/Admin/ManagePatients";
+import MedicalRecords from "./pages/dashboard/Admin/MedicalRecords";
+import Analytics from "./pages/dashboard/Admin/Analytics";
+import Feedback from "./pages/dashboard/Admin/Feedback";
+import Settings from "./pages/dashboard/Admin/Settings";
+import Appointment from "./pages/dashboard/Admin/Appointment";
 
 const App = () => {
   return (
@@ -41,7 +41,12 @@ const App = () => {
           <Route path="feedback" element={<Feedback />} />
           <Route path="settings" element={<Settings />} />
         </Route>
-        <Route path="/dashboard/doctor" element={<DoctorDashboard />} />
+
+        {/* Doctor dashboard */}
+        <Route path="/dashboard/doctor" element={<DoctorDashboard />} >
+
+        </Route>
+
         <Route path="/dashboard/patient" element={<PatientDashboard />} />
       </Routes>
       <ToastContainer
