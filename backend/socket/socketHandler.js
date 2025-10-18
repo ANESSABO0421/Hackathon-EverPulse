@@ -71,10 +71,11 @@ export const handleSocketConnection = (io) => {
 
     // Handle typing indicators
     socket.on('typing', (data) => {
-      const { chatId, isTyping } = data;
+      const { chatId, isTyping, userId, userName } = data;
       socket.to(chatId).emit('typing', {
-        userId: socket.userId,
-        userName: socket.userName,
+        userId: userId || socket.userId,
+        userName: userName || socket.userName,
+        userRole: socket.userRole,
         isTyping
       });
     });

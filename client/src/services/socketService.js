@@ -14,11 +14,15 @@ class SocketService {
 
     try {
       const SERVER_URL = (import.meta?.env?.VITE_SOCKET_SERVER_URL) || (import.meta?.env?.VITE_SERVER_URL) || 'http://localhost:3000';
+      console.log('Connecting to socket server:', SERVER_URL);
+      
       this.socket = io(SERVER_URL, {
         path: '/socket.io',
         auth: { token },
         transports: ['websocket', 'polling'],
         withCredentials: true,
+        timeout: 20000,
+        forceNew: true
       });
 
       this.setupEventListeners();
@@ -110,6 +114,18 @@ class SocketService {
   sendTyping(chatId, isTyping) {
     if (this.socket && this.isConnected) {
       this.socket.emit('typing', { chatId, isTyping });
+    }
+  }
+
+  // Send typing indicator with user info
+  sendTypingWithUser(chatId, isTyping, userId, userName) {
+    if (this.socket && this.isConnected) {
+      this.socket.emit('typing', { 
+        chatId, 
+        isTyping, 
+        userId, 
+        userName 
+      });
     }
   }
 

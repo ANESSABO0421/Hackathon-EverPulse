@@ -6,6 +6,7 @@ import {
   sendMessage,
   markMessagesAsRead,
   getAvailableDoctors,
+  getDoctorPatients,
   deleteMessage,
   editMessage
 } from "../controllers/chatController.js";
@@ -20,6 +21,7 @@ chatRouter.use(authMiddleware);
 chatRouter.get("/chats", getUserChats);
 chatRouter.post("/chats", getOrCreateChat);
 chatRouter.get("/doctors", getAvailableDoctors);
+chatRouter.get("/patients", getDoctorPatients);
 
 // Message routes
 chatRouter.get("/chats/:chatId/messages", getChatMessages);

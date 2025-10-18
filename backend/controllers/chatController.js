@@ -166,9 +166,12 @@ export const getChatMessages = async (req, res) => {
 // Send a message
 export const sendMessage = async (req, res) => {
   try {
-    const { chatId, content, messageType = 'text', replyTo } = req.body;
+    const { content, messageType = 'text', replyTo } = req.body;
+    const { chatId } = req.params;
     const userId = req.user.id;
     const userType = req.user.role;
+
+    console.log('Send message request:', { chatId, content, userId, userType });
 
     // Verify user has access to this chat
     const chat = await Chat.findOne({
@@ -178,6 +181,7 @@ export const sendMessage = async (req, res) => {
     }).populate('participants.userId', 'name');
 
     if (!chat) {
+      console.log('Chat not found or access denied for user:', userId);
       return res.status(404).json({ 
         message: "Chat not found or access denied" 
       });
@@ -186,6 +190,8 @@ export const sendMessage = async (req, res) => {
     // Get sender name
     const sender = chat.participants.find(p => p.userId.toString() === userId);
     const senderName = sender ? sender.name : 'Unknown';
+
+    console.log('Creating message with sender:', senderName);
 
     // Create message
     const message = await Message.create({
@@ -197,6 +203,8 @@ export const sendMessage = async (req, res) => {
       messageType,
       replyTo
     });
+
+    console.log('Message created:', message._id);
 
     // Update chat's last message
     await Chat.findByIdAndUpdate(chatId, {
@@ -221,14 +229,19 @@ export const sendMessage = async (req, res) => {
     const populatedMessage = await Message.findById(message._id)
       .populate('replyTo.messageId', 'content senderName');
 
+    console.log('Emitting message to chat:', chatId);
+
     // Emit to socket (will be handled by socket controller)
-    req.io.to(chatId).emit('newMessage', populatedMessage);
+    if (req.io) {
+      req.io.to(chatId).emit('newMessage', populatedMessage);
+    }
 
     res.status(201).json({
       message: "Message sent successfully",
       message: populatedMessage
     });
   } catch (error) {
+    console.error('Error sending message:', error);
     res.status(500).json({ 
       message: "Error sending message", 
       error: error.message 
@@ -293,13 +306,62 @@ export const getAvailableDoctors = async (req, res) => {
       .select('name specialization email avatar')
       .sort({ name: 1 });
 
+    console.log('Available doctors:', doctors.length);
+
     res.json({
       message: "Available doctors retrieved successfully",
       doctors
     });
   } catch (error) {
+    console.error('Error retrieving doctors:', error);
     res.status(500).json({ 
       message: "Error retrieving doctors", 
+      error: error.message 
+    });
+  }
+};
+
+// Get doctor's patients for chat
+export const getDoctorPatients = async (req, res) => {
+  try {
+    const doctorId = req.user.id;
+    
+    // Get patients who have chats with this doctor
+    const chats = await Chat.find({
+      'participants.userId': doctorId,
+      'participants.userType': 'Doctor',
+      isActive: true
+    })
+    .populate('participants.userId', 'name email')
+    .select('participants');
+
+    // Extract unique patients
+    const patientIds = new Set();
+    const patients = [];
+    
+    chats.forEach(chat => {
+      chat.participants.forEach(participant => {
+        if (participant.userType === 'Patient' && !patientIds.has(participant.userId.toString())) {
+          patientIds.add(participant.userId.toString());
+          patients.push({
+            _id: participant.userId._id,
+            name: participant.userId.name,
+            email: participant.userId.email
+          });
+        }
+      });
+    });
+
+    console.log('Doctor patients:', patients.length);
+
+    res.json({
+      message: "Doctor patients retrieved successfully",
+      patients
+    });
+  } catch (error) {
+    console.error('Error retrieving doctor patients:', error);
+    res.status(500).json({ 
+      message: "Error retrieving doctor patients", 
       error: error.message 
     });
   }

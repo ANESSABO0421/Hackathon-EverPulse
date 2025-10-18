@@ -7,6 +7,7 @@ import './PatientChat.css';
 
 const PatientChat = () => {
   const location = useLocation();
+  
   // State management
   const [chats, setChats] = useState([]);
   const [selectedChat, setSelectedChat] = useState(null);
@@ -15,21 +16,17 @@ const PatientChat = () => {
   const [loading, setLoading] = useState(true);
   const [sendingMessage, setSendingMessage] = useState(false);
   const [newMessage, setNewMessage] = useState('');
-  const [typingUsers, setTypingUsers] = useState([]);
   const [showNewChatModal, setShowNewChatModal] = useState(false);
   const [selectedDoctor, setSelectedDoctor] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
-  const [isTyping, setIsTyping] = useState(false);
 
   // Refs
   const messagesEndRef = useRef(null);
-  const typingTimeoutRef = useRef(null);
   const socketRef = useRef(null);
 
   useEffect(() => {
     initializeChat();
     return () => {
-      // Cleanup socket connection
       if (socketRef.current) {
         socketService.disconnect();
       }
@@ -55,36 +52,41 @@ const PatientChat = () => {
       // Connect to socket
       const token = localStorage.getItem('token');
       if (token) {
-        socketRef.current = socketService.connect(token);
-        setupSocketListeners();
+        try {
+          socketRef.current = socketService.connect(token);
+          setupSocketListeners();
+          console.log('Socket connected successfully');
+        } catch (socketError) {
+          console.error('Socket connection failed:', socketError);
+          toast.warning('Real-time features may not work properly');
+        }
+      } else {
+        console.warn('No authentication token found');
+        toast.error('Please log in again');
+        return;
       }
 
       // Load chats and doctors
+      console.log('Loading chats and doctors...');
       const [chatsResponse, doctorsResponse] = await Promise.all([
         chatAPI.getChats(),
         chatAPI.getAvailableDoctors()
       ]);
 
+      console.log('Chats response:', chatsResponse);
+      console.log('Doctors response:', doctorsResponse);
+
       const chatList = chatsResponse.chats || [];
       setChats(chatList);
       setDoctors(doctorsResponse.doctors || []);
       
-      // If chatId provided in URL, select that chat
-      const params = new URLSearchParams(location.search);
-      const initialChatId = params.get('chatId');
-      if (initialChatId) {
-        const found = chatList.find(c => c._id === initialChatId);
-        if (found) {
-          setSelectedChat(found);
-        } else if (chatList.length > 0) {
-          setSelectedChat(chatList[0]);
-        }
-      } else if (chatList.length > 0) {
+      // Select first chat if available
+      if (chatList.length > 0) {
         setSelectedChat(chatList[0]);
       }
     } catch (error) {
       console.error('Error initializing chat:', error);
-      toast.error('Failed to load chats');
+      toast.error(`Failed to load chats: ${error.message}`);
     } finally {
       setLoading(false);
     }
@@ -93,48 +95,32 @@ const PatientChat = () => {
   const setupSocketListeners = () => {
     // New message received
     socketService.on('newMessage', (message) => {
+      console.log('New message received:', message);
       setMessages(prev => {
         // Check if message already exists to avoid duplicates
         const exists = prev.find(m => m._id === message._id);
-        if (exists) return prev;
+        if (exists) {
+          return prev.map(m => m._id === message._id ? message : m);
+        }
         return [...prev, message];
       });
       scrollToBottom();
     });
 
-    // Typing indicator
-    socketService.on('typing', (data) => {
-      if (data.userId !== localStorage.getItem('userId')) {
-        setTypingUsers(prev => {
-          if (data.isTyping) {
-            return [...prev.filter(u => u.userId !== data.userId), data];
-          } else {
-            return prev.filter(u => u.userId !== data.userId);
-          }
-        });
-      }
-    });
-
-    // Message read status
-    socketService.on('messageReadBy', (data) => {
-      setMessages(prev => prev.map(msg => {
-        if (msg._id === data.messageId) {
-          return {
-            ...msg,
-            readBy: [...(msg.readBy || []), data.readBy]
-          };
-        }
-        return msg;
-      }));
-    });
-
     // Connection status
     socketService.on('connection', (status) => {
+      console.log('Socket connection status:', status);
       if (!status.connected) {
         toast.error('Connection lost. Attempting to reconnect...');
       } else {
         toast.success('Connected to chat server');
       }
+    });
+
+    // Error handling
+    socketService.on('error', (error) => {
+      console.error('Socket error:', error);
+      toast.error('Connection error occurred');
     });
   };
 
@@ -142,27 +128,37 @@ const PatientChat = () => {
     if (!selectedChat) return;
 
     try {
+      console.log('Loading messages for chat:', selectedChat._id);
       const response = await chatAPI.getChatMessages(selectedChat._id);
+      console.log('Messages response:', response);
+      
       setMessages(response.messages || []);
       
       // Mark messages as read
-      await chatAPI.markMessagesAsRead(selectedChat._id);
+      try {
+        await chatAPI.markMessagesAsRead(selectedChat._id);
+        console.log('Messages marked as read');
+      } catch (readError) {
+        console.warn('Failed to mark messages as read:', readError);
+      }
       
       scrollToBottom();
     } catch (error) {
       console.error('Error loading messages:', error);
-      toast.error('Failed to load messages');
+      toast.error(`Failed to load messages: ${error.message}`);
     }
   };
 
   const joinChatRoom = () => {
     if (selectedChat && socketRef.current) {
+      console.log('Joining chat room:', selectedChat._id);
       socketService.joinChat(selectedChat._id);
     }
   };
 
   const leaveChatRoom = () => {
     if (selectedChat && socketRef.current) {
+      console.log('Leaving chat room:', selectedChat._id);
       socketService.leaveChat(selectedChat._id);
     }
   };
@@ -180,50 +176,35 @@ const PatientChat = () => {
     setNewMessage('');
     setSendingMessage(true);
 
-    // Clear typing indicator
-    if (isTyping) {
-      socketService.sendTyping(selectedChat._id, false);
-      setIsTyping(false);
-    }
-
     try {
-      await chatAPI.sendMessage(selectedChat._id, {
+      console.log('Sending message:', { chatId: selectedChat._id, content: messageContent });
+      const response = await chatAPI.sendMessage(selectedChat._id, {
         content: messageContent,
         messageType: 'text'
       });
+      console.log('Message sent successfully:', response);
+      
+      // Add message to local state immediately for better UX
+      const newMsg = {
+        _id: Date.now().toString(), // Temporary ID
+        content: messageContent,
+        senderId: localStorage.getItem('userId'),
+        senderType: 'patient',
+        senderName: localStorage.getItem('userName') || 'You',
+        createdAt: new Date().toISOString(),
+        status: 'sending'
+      };
+      
+      setMessages(prev => [...prev, newMsg]);
+      scrollToBottom();
+      
     } catch (error) {
       console.error('Error sending message:', error);
-      toast.error('Failed to send message');
+      toast.error(`Failed to send message: ${error.message}`);
       setNewMessage(messageContent); // Restore message
     } finally {
       setSendingMessage(false);
     }
-  };
-
-  const handleTyping = (e) => {
-    const value = e.target.value;
-    setNewMessage(value);
-
-    if (value.trim() && !isTyping) {
-      setIsTyping(true);
-      socketService.sendTyping(selectedChat._id, true);
-    } else if (!value.trim() && isTyping) {
-      setIsTyping(false);
-      socketService.sendTyping(selectedChat._id, false);
-    }
-
-    // Clear previous timeout
-    if (typingTimeoutRef.current) {
-      clearTimeout(typingTimeoutRef.current);
-    }
-
-    // Set new timeout to stop typing indicator
-    typingTimeoutRef.current = setTimeout(() => {
-      if (isTyping) {
-        setIsTyping(false);
-        socketService.sendTyping(selectedChat._id, false);
-      }
-    }, 1000);
   };
 
   const handleCreateNewChat = async () => {
@@ -413,20 +394,6 @@ const PatientChat = () => {
                     );
                   })}
                   
-                  {/* Typing Indicator */}
-                  {typingUsers.length > 0 && (
-                    <div className="typing-indicator">
-                      <div className="typing-dots">
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                      </div>
-                      <span className="typing-text">
-                        {typingUsers[0].userName} is typing...
-                      </span>
-                    </div>
-                  )}
-                  
                   <div ref={messagesEndRef} />
                 </div>
               </div>
@@ -438,7 +405,7 @@ const PatientChat = () => {
                     type="text"
                     placeholder="Type your message..."
                     value={newMessage}
-                    onChange={handleTyping}
+                    onChange={(e) => setNewMessage(e.target.value)}
                     className="message-input"
                     disabled={sendingMessage}
                   />

@@ -6,10 +6,12 @@ const getAuthToken = () => {
 };
 
 // Helper function to create headers
-const createHeaders = (includeAuth = true) => {
-  const headers = {
-    'Content-Type': 'application/json',
-  };
+const createHeaders = (includeAuth = true, isFormData = false) => {
+  const headers = {};
+  
+  if (!isFormData) {
+    headers['Content-Type'] = 'application/json';
+  }
   
   if (includeAuth) {
     const token = getAuthToken();
@@ -24,8 +26,9 @@ const createHeaders = (includeAuth = true) => {
 // Generic API request function
 const apiRequest = async (endpoint, options = {}) => {
   const url = `${API_BASE_URL}${endpoint}`;
+  const isFormData = options.body instanceof FormData;
   const config = {
-    headers: createHeaders(options.includeAuth !== false),
+    headers: createHeaders(options.includeAuth !== false, isFormData),
     ...options,
   };
 
@@ -156,6 +159,8 @@ export const chatAPI = {
   }),
 
   getAvailableDoctors: () => apiRequest('/chat/doctors'),
+  
+  getDoctorPatients: () => apiRequest('/chat/patients'),
 
   // Messages
   getChatMessages: (chatId, page = 1, limit = 50) => 
@@ -279,10 +284,19 @@ export const doctorAPI = {
 
   // Profile management
   getProfile: () => apiRequest('/doctors/profile/me'),
-  updateProfile: (profileData) => apiRequest('/doctors/profile/me', {
-    method: 'PUT',
-    body: JSON.stringify(profileData)
-  }),
+  updateProfile: (profileData) => {
+    // Handle FormData for file uploads
+    if (profileData instanceof FormData) {
+      return apiRequest('/doctors/profile/me', {
+        method: 'PUT',
+        body: profileData
+      });
+    }
+    return apiRequest('/doctors/profile/me', {
+      method: 'PUT',
+      body: JSON.stringify(profileData)
+    });
+  },
 
   // Public doctor listing
   getAll: (search = '', specialization = '') => 
