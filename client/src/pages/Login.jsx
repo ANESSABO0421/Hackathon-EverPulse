@@ -36,9 +36,38 @@ export default function Login() {
         password: formData.password,
       });
 
-      // ✅ Save token & role
+      console.log('Login response:', data);
+      
+      if (!data.token) {
+        throw new Error('No token received from server');
+      }
+
+      // ✅ Save token, role, and user ID
       localStorage.setItem("token", data.token);
       localStorage.setItem("role", data.role);
+      
+      // Store the user ID if available in the response
+      if (data.userId) {
+        localStorage.setItem("userId", data.userId);
+        console.log('Saved userId to localStorage. User ID:', data.userId);
+      } else if (data.user && data.user._id) {
+        // Handle case where user data is nested in a user object
+        localStorage.setItem("userId", data.user._id);
+        console.log('Saved userId to localStorage. User ID:', data.user._id);
+      } else if (data.patientId) {
+        // Handle case where it's named patientId in the response
+        localStorage.setItem("userId", data.patientId);
+        console.log('Saved userId to localStorage. User ID:', data.patientId);
+      } else if (data.doctorId) {
+        // Handle case where it's named doctorId in the response
+        localStorage.setItem("userId", data.doctorId);
+        console.log('Saved userId to localStorage. User ID:', data.doctorId);
+      } else {
+        console.warn('No user ID found in login response');
+      }
+      
+      console.log('Saved token to localStorage. Token:', data.token);
+      console.log('Saved role to localStorage. Role:', data.role);
 
       toast.success("Login successful!");
 

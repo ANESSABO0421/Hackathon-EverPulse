@@ -98,13 +98,39 @@ const PatientChat = () => {
       console.log('New message received:', message);
       setMessages(prev => {
         // Check if message already exists to avoid duplicates
-        const exists = prev.find(m => m._id === message._id);
+        const exists = prev.find(m => m._id === message._id || (m.isTemporary && m.content === message.content && m.senderId === message.senderId));
+        
         if (exists) {
-          return prev.map(m => m._id === message._id ? message : m);
+          // Replace temporary message with the one from server
+          return prev.map(m => 
+            (m._id === message._id || (m.isTemporary && m.content === message.content && m.senderId === message.senderId))
+              ? { ...message, status: 'delivered' }
+              : m
+          );
         }
-        return [...prev, message];
+        
+        // Add sender info if not present
+        const messageWithSender = {
+          ...message,
+          sender: message.sender || {
+            _id: message.senderId,
+            name: message.senderType === 'doctor' 
+              ? (getOtherParticipant(selectedChat)?.name || 'Doctor')
+              : 'You',
+            type: message.senderType
+          },
+          status: 'delivered'
+        };
+        
+        return [...prev, messageWithSender];
       });
+      
       scrollToBottom();
+      
+      // Play message sound if not from current user
+      if (message.senderId !== localStorage.getItem('userId')) {
+        playMessageSound();
+      }
     });
 
     // Connection status
@@ -176,30 +202,55 @@ const PatientChat = () => {
     setNewMessage('');
     setSendingMessage(true);
 
+    // Create a temporary message ID for optimistic UI update
+    const tempMessageId = `temp-${Date.now()}`;
+    const currentUser = {
+      _id: localStorage.getItem('userId'),
+      name: localStorage.getItem('userName') || 'You',
+      type: 'patient'
+    };
+
+    // Add message to local state immediately for better UX
+    const newMsg = {
+      _id: tempMessageId,
+      content: messageContent,
+      sender: currentUser,
+      senderId: currentUser._id,
+      senderType: currentUser.type,
+      senderName: currentUser.name,
+      createdAt: new Date().toISOString(),
+      status: 'sending',
+      isTemporary: true
+    };
+    
+    // Optimistically update UI
+    setMessages(prev => [...prev, newMsg]);
+    scrollToBottom();
+
     try {
       console.log('Sending message:', { chatId: selectedChat._id, content: messageContent });
       const response = await chatAPI.sendMessage(selectedChat._id, {
         content: messageContent,
         messageType: 'text'
       });
+      
       console.log('Message sent successfully:', response);
       
-      // Add message to local state immediately for better UX
-      const newMsg = {
-        _id: Date.now().toString(), // Temporary ID
-        content: messageContent,
-        senderId: localStorage.getItem('userId'),
-        senderType: 'patient',
-        senderName: localStorage.getItem('userName') || 'You',
-        createdAt: new Date().toISOString(),
-        status: 'sending'
-      };
-      
-      setMessages(prev => [...prev, newMsg]);
-      scrollToBottom();
+      // Update the message with server response
+      setMessages(prev => prev.map(msg => 
+        msg._id === tempMessageId 
+          ? { ...response.message, status: 'sent' } 
+          : msg
+      ));
       
     } catch (error) {
       console.error('Error sending message:', error);
+      // Update message status to show error
+      setMessages(prev => prev.map(msg => 
+        msg._id === tempMessageId 
+          ? { ...msg, status: 'error', error: 'Failed to send' } 
+          : msg
+      ));
       toast.error(`Failed to send message: ${error.message}`);
       setNewMessage(messageContent); // Restore message
     } finally {
@@ -375,20 +426,48 @@ const PatientChat = () => {
                   {messages.map((message) => {
                     const isOwnMessage = message.senderId === localStorage.getItem('userId');
                     const messageTime = formatTime(message.createdAt);
+                    const senderName = isOwnMessage ? 'You' : (message.senderName || 'Doctor');
                     
                     return (
                       <div
-                        key={message._id}
-                        className={`message ${isOwnMessage ? 'own' : 'other'}`}
+                        key={message._id || `msg-${Date.now()}`}
+                        className={`message ${isOwnMessage ? 'own' : 'other'} ${message.status || ''}`}
+                        data-message-id={message._id}
                       >
                         <div className="message-content">
-                          <div className="message-text">{message.content}</div>
-                          <div className="message-time">{messageTime}</div>
-                          {isOwnMessage && (
-                            <div className="message-status">
-                              {message.readBy && message.readBy.length > 1 ? '✓✓' : '✓'}
+                          {!isOwnMessage && (
+                            <div className="message-sender">
+                              {message.sender?.name || senderName}
+                              {message.sender?.specialization && (
+                                <span className="message-sender-specialization">
+                                  {message.sender.specialization}
+                                </span>
+                              )}
                             </div>
                           )}
+                          
+                          <div className="message-text">
+                            {message.content}
+                            {message.status === 'sending' && (
+                              <span className="message-sending-indicator">
+                                <span className="dot"></span>
+                                <span className="dot"></span>
+                                <span className="dot"></span>
+                              </span>
+                            )}
+                            {message.status === 'error' && (
+                              <span className="message-error" title={message.error || 'Failed to send'}>⚠️</span>
+                            )}
+                          </div>
+                          
+                          <div className="message-time">
+                            {messageTime}
+                            {isOwnMessage && (
+                              <span className={`message-status ${message.readBy?.length > 1 ? 'read' : ''}`}>
+                                {message.readBy?.length > 1 ? '✓✓' : '✓'}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
                     );

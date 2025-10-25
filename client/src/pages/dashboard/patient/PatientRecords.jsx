@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
+import { FiPlus, FiSearch, FiFilter, FiChevronRight, FiCalendar, FiUser, FiDroplet, FiFileText } from 'react-icons/fi';
 import { medicalRecordsAPI, patientAPI } from '../../../services/api';
 import MedicalRecordForm from '../../../components/MedicalRecordForm';
 import MedicalRecordDetails from '../../../components/MedicalRecordDetails';
@@ -125,8 +126,27 @@ const PatientRecords = () => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
-      day: 'numeric'
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
     });
+  };
+
+  const getInitials = (name) => {
+    if (!name) return 'DR';
+    return name
+      .split(' ')
+      .map(n => n[0])
+      .join('')
+      .toUpperCase()
+      .substring(0, 2);
+  };
+
+  const getRecordType = (record) => {
+    if (record.diagnosis) return 'Diagnosis';
+    if (record.prescriptions?.length > 0) return 'Prescription';
+    if (record.treatment) return 'Treatment';
+    return 'General';
   };
 
   if (loading) {
@@ -157,13 +177,16 @@ const PatientRecords = () => {
   return (
     <div className="patient-records-container">
       <div className="records-header">
-        <h1>My Medical Records</h1>
+        <div>
+          <h1>My Health Records</h1>
+          <p className="page-description">View and manage your complete medical history in one place</p>
+        </div>
         <div className="header-actions">
           <button 
             className="btn btn-primary"
             onClick={handleAddRecord}
           >
-            Request New Record
+            <FiPlus className="btn-icon" /> Request New Record
           </button>
         </div>
       </div>
@@ -178,101 +201,111 @@ const PatientRecords = () => {
               </div>
               <div className="summary-content">
                 <div className="summary-item">
-                  <span className="label">Name:</span>
+                  <span className="label">
+                    <FiUser className="summary-icon" /> Name
+                  </span>
                   <span className="value">{patientProfile.name}</span>
                 </div>
                 <div className="summary-item">
-                  <span className="label">Age:</span>
+                  <span className="label">
+                    <FiCalendar className="summary-icon" /> Age
+                  </span>
                   <span className="value">
                     {new Date().getFullYear() - new Date(patientProfile.dateOfBirth).getFullYear()} years
                   </span>
                 </div>
                 <div className="summary-item">
-                  <span className="label">Blood Group:</span>
-                  <span className="value">{patientProfile.bloodGroup || 'Not specified'}</span>
+                  <span className="label">
+                    <FiDroplet className="summary-icon" /> Blood Group
+                  </span>
+                  <span className={`value ${patientProfile.bloodGroup ? 'blood-group' : ''}`}>
+                    {patientProfile.bloodGroup || 'Not specified'}
+                  </span>
                 </div>
                 <div className="summary-item">
-                  <span className="label">Total Records:</span>
+                  <span className="label">
+                    <FiFileText className="summary-icon" /> Total Records
+                  </span>
                   <span className="value">{records.length}</span>
                 </div>
               </div>
             </div>
           )}
 
-          {/* Search and Filter Controls */}
+          {/* Search and Filter */}
           <div className="search-filter-container">
             <div className="search-box">
+              <FiSearch className="search-icon" />
               <input
                 type="text"
-                placeholder="Search records by diagnosis, treatment, or doctor..."
+                placeholder="Search records..."
+                className="search-input"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="search-input"
               />
-              <span className="search-icon">🔍</span>
             </div>
-            
             <div className="filter-controls">
-              <select 
-                value={filterBy} 
-                onChange={(e) => setFilterBy(e.target.value)}
-                className="filter-select"
-              >
-                <option value="all">All Records</option>
-                <option value="recent">Recent (Last Month)</option>
-                <option value="diagnosis">With Diagnosis</option>
-                <option value="treatment">With Treatment</option>
-              </select>
+              <div className="filter-select-wrapper">
+                <FiFilter className="filter-icon" />
+                <select
+                  className="filter-select"
+                  value={filterBy}
+                  onChange={(e) => setFilterBy(e.target.value)}
+                >
+                  <option value="all">All Records</option>
+                  <option value="recent">Recent (Last 30 days)</option>
+                  <option value="diagnosis">Diagnosis</option>
+                  <option value="treatment">Treatments</option>
+                </select>
+              </div>
             </div>
           </div>
 
           {/* Records List */}
-          <div className="records-list">
-            {filteredRecords.length === 0 ? (
-              <div className="no-records">
-                <div className="no-records-icon">📋</div>
-                <h3>No Medical Records Found</h3>
-                <p>
-                  {records.length === 0 
-                    ? "You don't have any medical records yet. Records will appear here after your doctor visits."
-                    : "No records match your current search criteria."
-                  }
-                </p>
-              </div>
-            ) : (
-              filteredRecords.map((record) => (
-                <div key={record._id} className="record-card">
-                  <div className="record-header">
-                    <div className="record-date">
-                      {formatDate(record.visitDate)}
+          {filteredRecords.length > 0 ? (
+            <div className="records-list">
+              {filteredRecords.map(record => (
+                <div key={record._id} className="record-card" onClick={() => handleViewRecord(record)}>
+                  <div className="record-card-header">
+                    <div>
+                      <h3 className="record-card-title">
+                        {record.diagnosis || 'Medical Record'}
+                        <span className="record-type-badge">{getRecordType(record)}</span>
+                      </h3>
+                      <div className="record-meta">
+                        <span className="record-date">
+                          <FiCalendar className="meta-icon" /> {formatDate(record.visitDate)}
+                        </span>
+                        {record.doctorId && (
+                          <span className="record-doctor">
+                            <FiUser className="meta-icon" /> Dr. {record.doctorId.name || 'Unknown'}
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <div className="record-actions">
-                      <button
-                        className="btn btn-sm btn-outline"
-                        onClick={() => handleViewRecord(record)}
+                      <button 
+                        className="btn-icon"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleViewRecord(record);
+                        }}
+                        title="View Details"
                       >
-                        View
+                        <FiChevronRight />
                       </button>
                     </div>
                   </div>
                   
-                  <div className="record-content">
-                    <div className="record-doctor">
-                      <span className="label">Doctor:</span>
-                      <span className="value">
-                        {record.doctorId?.name || 'Unknown Doctor'}
-                        {record.doctorId?.specialization && (
-                          <span className="specialization">
-                            ({record.doctorId.specialization})
-                          </span>
-                        )}
-                      </span>
-                    </div>
-                    
-                    {record.diagnosis && (
-                      <div className="record-diagnosis">
-                        <span className="label">Diagnosis:</span>
-                        <span className="value">{record.diagnosis}</span>
+                  <div className="record-card-content">
+                    {record.notes && (
+                      <div className="record-card-detail">
+                        <div className="record-card-label">Notes</div>
+                        <p className="record-card-value">
+                          {record.notes.length > 150 
+                            ? `${record.notes.substring(0, 150)}...` 
+                            : record.notes}
+                        </p>
                       </div>
                     )}
                     
@@ -295,9 +328,21 @@ const PatientRecords = () => {
                     )}
                   </div>
                 </div>
-              ))
-            )}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div className="no-records">
+              <div className="no-records-icon">📋</div>
+              <h3>No Records Found</h3>
+              <p>No medical records found matching your search criteria.</p>
+              <button 
+                className="btn btn-primary"
+                onClick={handleAddRecord}
+              >
+                <FiPlus className="btn-icon" /> Add New Record
+              </button>
+            </div>
+          )}
         </>
       )}
 

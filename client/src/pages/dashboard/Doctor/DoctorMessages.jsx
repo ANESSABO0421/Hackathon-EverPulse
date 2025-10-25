@@ -388,7 +388,7 @@ const DoctorMessages = () => {
   );
 
   if (loading) {
-    return (
+  return (
       <div className="doctor-messages-container">
         <div className="loading-spinner">
           <div className="spinner"></div>

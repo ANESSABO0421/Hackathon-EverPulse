@@ -135,14 +135,56 @@ const ManagePatients = () => {
 
   const handleEditPatient = async (e) => {
     e.preventDefault();
+    
+    // Basic form validation
+    if (!formData.name || !formData.email) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+    
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      toast.error('Please enter a valid email address');
+      return;
+    }
+    
     try {
-      await adminAPI.updatePatient(selectedPatient._id, formData);
-      toast.success('Patient updated successfully');
-      setShowEditModal(false);
-      setSelectedPatient(null);
-      fetchPatients();
+      // Prepare the data to send (only include fields that should be updated)
+      const updateData = {
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        gender: formData.gender,
+        dateOfBirth: formData.dateOfBirth,
+        bloodGroup: formData.bloodGroup,
+        height: formData.height,
+        weight: formData.weight,
+        maritalStatus: formData.maritalStatus,
+        address: formData.address,
+        emergencyContact: formData.emergencyContact,
+        insuranceProvider: formData.insuranceProvider,
+        insurancePolicyNumber: formData.insurancePolicyNumber,
+        allergies: formData.allergies,
+        chronicConditions: formData.chronicConditions,
+        currentMedications: formData.currentMedications
+      };
+      
+      // Call the API to update the patient
+      const response = await adminAPI.updatePatient(selectedPatient._id, updateData);
+      
+      if (response.success) {
+        toast.success('Patient updated successfully');
+        setShowEditModal(false);
+        setSelectedPatient(null);
+        resetFormData();
+        fetchPatients(); // Refresh the patient list
+      } else {
+        throw new Error(response.message || 'Failed to update patient');
+      }
     } catch (error) {
-      toast.error('Failed to update patient');
+      console.error('Error updating patient:', error);
+      toast.error(error.message || 'Failed to update patient. Please try again.');
     }
   };
 
@@ -159,30 +201,59 @@ const ManagePatients = () => {
   };
 
   const openEditModal = (patient) => {
-    setSelectedPatient(patient);
-    setFormData({
-      name: patient.name || '',
-      email: patient.email || '',
-      phone: patient.phone || '',
-      gender: patient.gender || '',
-      dateOfBirth: patient.dateOfBirth ? new Date(patient.dateOfBirth).toISOString().split('T')[0] : '',
-      bloodGroup: patient.bloodGroup || '',
-      height: patient.height || '',
-      weight: patient.weight || '',
-      maritalStatus: patient.maritalStatus || '',
-      address: patient.address || '',
-      emergencyContact: {
-        name: patient.emergencyContact?.name || '',
-        relation: patient.emergencyContact?.relation || '',
-        phone: patient.emergencyContact?.phone || ''
-      },
-      insuranceProvider: patient.insuranceProvider || '',
-      insurancePolicyNumber: patient.insurancePolicyNumber || '',
-      allergies: patient.allergies || [],
-      chronicConditions: patient.chronicConditions || [],
-      currentMedications: patient.currentMedications || []
-    });
-    setShowEditModal(true);
+    try {
+      // Make sure we have a valid patient object
+      if (!patient || !patient._id) {
+        throw new Error('Invalid patient data');
+      }
+      
+      // Set the selected patient
+      setSelectedPatient(patient);
+      
+      // Format the date for the date input
+      let formattedDateOfBirth = '';
+      if (patient.dateOfBirth) {
+        try {
+          // Handle both string and Date objects
+          const date = new Date(patient.dateOfBirth);
+          if (!isNaN(date.getTime())) {
+            formattedDateOfBirth = date.toISOString().split('T')[0];
+          }
+        } catch (e) {
+          console.warn('Error formatting date of birth:', e);
+        }
+      }
+      
+      // Set the form data with the patient's information
+      setFormData({
+        name: patient.name || '',
+        email: patient.email || '',
+        phone: patient.phone || '',
+        gender: patient.gender || '',
+        dateOfBirth: formattedDateOfBirth,
+        bloodGroup: patient.bloodGroup || '',
+        height: patient.height || '',
+        weight: patient.weight || '',
+        maritalStatus: patient.maritalStatus || '',
+        address: patient.address || '',
+        emergencyContact: {
+          name: patient.emergencyContact?.name || '',
+          relation: patient.emergencyContact?.relation || '',
+          phone: patient.emergencyContact?.phone || ''
+        },
+        insuranceProvider: patient.insuranceProvider || '',
+        insurancePolicyNumber: patient.insurancePolicyNumber || '',
+        allergies: Array.isArray(patient.allergies) ? [...patient.allergies] : [],
+        chronicConditions: Array.isArray(patient.chronicConditions) ? [...patient.chronicConditions] : [],
+        currentMedications: Array.isArray(patient.currentMedications) ? [...patient.currentMedications] : []
+      });
+      
+      // Show the edit modal
+      setShowEditModal(true);
+    } catch (error) {
+      console.error('Error opening edit modal:', error);
+      toast.error('Failed to load patient data. Please try again.');
+    }
   };
 
   const openViewModal = (patient) => {
