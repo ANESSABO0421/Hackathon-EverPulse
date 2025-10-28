@@ -27,7 +27,7 @@ export default function AdminSidebar() {
   ];
 
   return (
-    <div className="w-64 bg-[#0047AB] text-white flex flex-col shadow-xl">
+    <div className="w-64 bg-[#0047AB] h-screen text-white flex flex-col shadow-xl">
       <div className="p-5 text-center text-2xl font-bold border-b border-blue-700">
         EverPulse Admin
       </div>
