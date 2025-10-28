@@ -1,5 +1,5 @@
-const API_BASE_URL = (import.meta?.env?.VITE_API_BASE_URL || 'http://localhost:3000/api');
-
+// const API_BASE_URL = (import.meta?.env?.VITE_API_BASE_URL || 'http://localhost:3000/api');
+const API_BASE_URL = 'https://hackathon-everpulse.onrender.com/api';
 // Helper function to get auth token
 const getAuthToken = () => {
   const token = localStorage.getItem('token');
