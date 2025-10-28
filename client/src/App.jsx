@@ -18,6 +18,7 @@ import Analytics from "./pages/dashboard/Admin/Analytics";
 import Feedback from "./pages/dashboard/Admin/Feedback";
 import Settings from "./pages/dashboard/Admin/Settings";
 import Appointment from "./pages/dashboard/Admin/Appointment";
+import AdminAddDoctor from "./pages/dashboard/Admin/AdminAddDoctor";
 import DoctorDashboard from "./pages/dashboard/Doctor/DoctorDashboard";
 import DoctorOverview from "./pages/dashboard/Doctor/DoctorOverview";
 import DoctorPatients from "./pages/dashboard/Doctor/DoctorPatients";
@@ -52,7 +53,7 @@ const App = () => {
           <Route path="appointments" element={<Appointment />} />
           <Route path="records" element={<MedicalRecords />} />
           <Route path="analytics" element={<Analytics />} />
-          <Route path="feedback" element={<Feedback />} />
+          <Route path="add-doctor" element={<AdminAddDoctor />} />
           <Route path="settings" element={<Settings />} />
         </Route>
 

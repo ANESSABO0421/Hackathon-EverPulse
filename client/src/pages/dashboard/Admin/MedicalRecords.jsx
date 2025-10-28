@@ -3,7 +3,6 @@ import { toast } from 'react-toastify';
 import { adminAPI } from '../../../services/api';
 import { 
   Search, 
-  Filter,
   FileText,
   User,
   Stethoscope,
@@ -16,7 +15,8 @@ import {
   Plus,
   AlertCircle,
   CheckCircle,
-  Clock
+  Clock,
+  Loader2
 } from 'lucide-react';
 import './MedicalRecords.css';
 
@@ -212,11 +212,9 @@ const MedicalRecords = () => {
 
   if (loading) {
     return (
-      <div className="medical-records-container">
-        <div className="loading-spinner">
-          <div className="spinner"></div>
-          <p>Loading medical records...</p>
-        </div>
+      <div className="flex flex-col items-center justify-center min-h-[60vh] w-full">
+        <Loader2 className="w-16 h-16 text-blue-500 animate-spin mb-4" />
+        <p className="text-lg text-gray-600">Loading medical records...</p>
       </div>
     );
   }

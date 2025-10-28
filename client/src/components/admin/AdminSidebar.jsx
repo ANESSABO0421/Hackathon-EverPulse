@@ -42,11 +42,16 @@ export default function AdminSidebar() {
   const menuItems = [
     { name: "Overview", icon: <LayoutDashboard size={20} />, path: "overview" },
     { name: "Manage Doctors", icon: <Stethoscope size={20} />, path: "doctors" },
+    { 
+      name: "Add Doctor", 
+      icon: <Stethoscope size={20} />, 
+      path: "add-doctor",
+      className: "bg-blue-600 hover:bg-blue-700 mt-4"
+    },
     { name: "Manage Patients", icon: <Users size={20} />, path: "patients" },
     { name: "Appointments", icon: <ClipboardList size={20} />, path: "appointments" },
     { name: "Medical Records", icon: <FileText size={20} />, path: "records" },
     { name: "Analytics", icon: <BarChart2 size={20} />, path: "analytics" },
-    { name: "Feedback", icon: <MessageSquare size={20} />, path: "feedback" },
     { name: "Settings", icon: <Settings size={20} />, path: "settings" },
   ];
 
@@ -69,8 +74,8 @@ export default function AdminSidebar() {
               <NavLink
                 key={item.name}
                 to={item.path}
-                className={`flex items-center gap-3 px-5 py-3 text-sm font-medium transition-all duration-200 ${
-                  isActive
+                className={`flex items-center gap-3 px-5 py-3 text-sm font-medium transition-all duration-200 ${item.className || ''} ${
+                  isActive && !item.className
                     ? "bg-white/20 text-white"
                     : "text-blue-100 hover:bg-white/10 hover:text-white"
                 }`}
