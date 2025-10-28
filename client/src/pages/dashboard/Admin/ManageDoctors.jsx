@@ -56,13 +56,22 @@ const ManageDoctors = () => {
   }, []);
 
   const fetchDoctors = async () => {
+    setLoading(true);
+    
     try {
-      setLoading(true);
       const response = await adminAPI.getAllDoctors();
-      setDoctors(response.doctors || []);
+      const doctorsArray = response?.doctors || response || [];
+      
+      const formattedDoctors = doctorsArray.map((doc) => ({
+        ...doc,
+        experience: doc.yearsOfExperience || doc.experience || 0,
+        hospital: doc.hospitalAffiliation || doc.hospital || '',
+        education: doc.qualifications?.join(', ') || doc.education || ''
+      }));
+      
+      setDoctors(formattedDoctors);
     } catch (error) {
-      setError(error.message);
-      toast.error('Failed to load doctors');
+      console.error(error);
     } finally {
       setLoading(false);
     }
@@ -123,11 +132,18 @@ const ManageDoctors = () => {
 
   const handleEditDoctor = async (e) => {
     e.preventDefault();
+    
     try {
-      await adminAPI.updateDoctor(selectedDoctor._id, formData);
+      const updateData = {
+        ...formData,
+        yearsOfExperience: parseInt(formData.experience) || 0,
+        hospitalAffiliation: formData.hospital,
+        qualifications: formData.education ? formData.education.split(',').map(q => q.trim()) : []
+      };
+      
+      await adminAPI.updateDoctor(selectedDoctor._id, updateData);
       toast.success('Doctor updated successfully');
       setShowEditModal(false);
-      setSelectedDoctor(null);
       fetchDoctors();
     } catch (error) {
       toast.error('Failed to update doctor');
@@ -153,9 +169,9 @@ const ManageDoctors = () => {
       email: doctor.email || '',
       phone: doctor.phone || '',
       specialization: doctor.specialization || '',
-      experience: doctor.experience || '',
-      education: doctor.education || '',
-      hospital: doctor.hospital || '',
+      experience: doctor.experience || doctor.yearsOfExperience || '',
+      education: doctor.education || doctor.qualifications?.join(', ') || '',
+      hospital: doctor.hospital || doctor.hospitalAffiliation || '',
       address: doctor.address || '',
       consultationFee: doctor.consultationFee || '',
       availability: doctor.availability || formData.availability

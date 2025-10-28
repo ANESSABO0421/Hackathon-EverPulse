@@ -248,7 +248,28 @@ export const adminAPI = {
   }),
 
   // Appointments management
-  getAllAppointments: () => apiRequest('/admins/appointments'),
+  getAllAppointments: (status = '', startDate = '', endDate = '', doctorId = '', patientId = '') => {
+    let url = '/admins/appointments?';
+    if (status) url += `status=${status}&`;
+    if (startDate) url += `startDate=${startDate}&`;
+    if (endDate) url += `endDate=${endDate}&`;
+    if (doctorId) url += `doctorId=${doctorId}&`;
+    if (patientId) url += `patientId=${patientId}&`;
+    return apiRequest(url.replace(/&$/, ''));
+  },
+  
+  getAppointmentById: (appointmentId) => apiRequest(`/admins/appointments/${appointmentId}`),
+  
+  updateAppointment: (appointmentId, updateData) => apiRequest(`/admins/appointments/${appointmentId}`, {
+    method: 'PUT',
+    body: JSON.stringify(updateData)
+  }),
+  
+  deleteAppointment: (appointmentId) => apiRequest(`/admins/appointments/${appointmentId}`, {
+    method: 'DELETE'
+  }),
+  
+  getAppointmentStats: (period = 'month') => apiRequest(`/admins/appointments/stats?period=${period}`),
 
   // Medical records management
   getAllMedicalRecords: (page = 1, limit = 20, search = '') => 
