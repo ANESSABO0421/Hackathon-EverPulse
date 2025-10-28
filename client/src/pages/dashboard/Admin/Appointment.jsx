@@ -18,8 +18,10 @@ import {
   XCircle,
   AlertCircle,
   Download,
-  RefreshCw
+  RefreshCw,
+  Loader2
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import './Appointment.css';
 
 const Appointment = () => {
@@ -338,71 +340,69 @@ const Appointment = () => {
     }
   });
 
+  // Skeleton loading component
+  const AppointmentSkeleton = () => (
+    <div className="space-y-4 p-4">
+      {[1, 2, 3].map((i) => (
+        <div key={i} className="skeleton-appointment bg-gray-100 rounded-lg p-4">
+          <div className="skeleton-line w-1/4 h-4 bg-gray-200 rounded"></div>
+          <div className="skeleton-line w-2/4 h-4 mt-2 bg-gray-200 rounded"></div>
+          <div className="skeleton-line w-3/4 h-4 mt-2 bg-gray-200 rounded"></div>
+          <div className="skeleton-line w-1/3 h-4 mt-2 bg-gray-200 rounded"></div>
+        </div>
+      ))}
+    </div>
+  );
+
   if (loading) {
     return (
-      <div className="appointments-container">
-        <div className="loading-spinner">
-          <div className="spinner"></div>
-          <p>Loading appointments...</p>
+      <div className="appointments-container p-4">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold text-gray-800">Appointments</h1>
+          <div className="flex gap-2">
+            <div className="skeleton-line w-32 h-10 bg-gray-200 rounded"></div>
+            <div className="skeleton-line w-40 h-10 bg-gray-200 rounded"></div>
+          </div>
         </div>
+        <AppointmentSkeleton />
       </div>
     );
   }
 
   return (
-    <div className="appointments-container">
-      <div className="appointments-header">
-        <div className="header-left">
-          <h1>Manage Appointments</h1>
-          <p>View and manage all patient appointments</p>
-        </div>
-        <div className="header-actions">
-          <button 
-            className="btn btn-secondary"
-            onClick={() => fetchAppointments()}
-          >
-            <RefreshCw size={16} />
-            Refresh
-          </button>
-          <button 
-            className="btn btn-primary"
-            onClick={() => {/* Export functionality */}}
-          >
-            <Download size={16} />
-            Export
-          </button>
-        </div>
-      </div>
-
-      {/* Search and Filter Bar */}
-      <div className="search-filter-bar">
-        <div className="search-box">
-          <Search size={20} />
-          <input
-            type="text"
-            placeholder="Search by patient, doctor, email, or specialization..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-        
-        <div className="filter-controls">
+    <motion.div 
+      className="appointments-container p-4"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.3 }}
+    >
+      <div className="flex justify-between items-center mb-6">
+        <motion.h1 
+          className="text-2xl font-bold text-gray-800"
+          initial={{ y: -20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.1 }}
+        >
+          Appointments
+        </motion.h1>
+        <div className="flex gap-2">
           <select 
-            value={filterBy} 
+            value={filterBy}
             onChange={(e) => setFilterBy(e.target.value)}
+            className="px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="all">All Appointments</option>
+            <option value="today">Today</option>
             <option value="scheduled">Scheduled</option>
             <option value="confirmed">Confirmed</option>
             <option value="completed">Completed</option>
             <option value="cancelled">Cancelled</option>
-            <option value="no-show">No Show</option>
-            <option value="today">Today's Appointments</option>
           </select>
-          
           <select 
             value={sortBy} 
             onChange={(e) => setSortBy(e.target.value)}
+            className="px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="date">Sort by Date</option>
             <option value="time">Sort by Time</option>
@@ -413,17 +413,53 @@ const Appointment = () => {
         </div>
       </div>
 
-      {/* Appointments List */}
-      <div className="appointments-list">
-        {sortedAppointments.length === 0 ? (
-          <div className="no-appointments">
-            <Calendar size={48} color="#9ca3af" />
-            <h3>No Appointments Found</h3>
-            <p>No appointments match your current search criteria.</p>
-          </div>
-        ) : (
-          sortedAppointments.map((appointment) => (
-            <div key={appointment._id} className="appointment-card">
+      <AnimatePresence mode="wait">
+        {error ? (
+        <motion.div 
+          className="error-message"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          <AlertCircle size={24} />
+          <p>{error}</p>
+          <button 
+            className="btn btn-primary"
+            onClick={() => window.location.reload()}
+          >
+            <RefreshCw size={16} /> Try Again
+          </button>
+        </motion.div>
+      ) : appointments.length === 0 ? (
+        <motion.div 
+          className="empty-state"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          <p>No appointments found</p>
+          <button 
+            className="btn btn-primary"
+            onClick={() => window.location.reload()}
+          >
+            <RefreshCw size={16} /> Refresh
+          </button>
+        </motion.div>
+      ) : (
+        <div className="appointments-list space-y-4">
+          {sortedAppointments.map((appointment) => (
+            <motion.div 
+              key={appointment._id}
+              className={`appointment-card ${appointment.status?.toLowerCase()}`}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
               <div className="appointment-header">
                 <div className="appointment-date">
                   <Calendar size={20} color="#6b7280" />
@@ -517,130 +553,9 @@ const Appointment = () => {
                   <Trash2 size={16} />
                   Delete
                 </button>
-                <button 
-                  className="btn btn-danger btn-sm"
-                  onClick={() => handleDeleteAppointment(appointment._id)}
-                >
-                  <Trash2 size={16} />
-                  Delete
-                </button>
               </div>
-            </div>
-          ))
-        )}
-      </div>
-
-      {/* View Appointment Modal */}
-      {showViewModal && selectedAppointment && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h2>Appointment Details</h2>
-              <button 
-                className="close-button"
-                onClick={() => setShowViewModal(false)}
-              >
-                ×
-              </button>
-            </div>
-            
-            <div className="modal-body">
-              <div className="appointment-details">
-                <div className="detail-section">
-                  <h3>Appointment Information</h3>
-                  <div className="detail-grid">
-                    <div className="detail-item">
-                      <Calendar size={16} />
-                      <span>Date:</span>
-                      <span>{formatDate(selectedAppointment.date)}</span>
-                    </div>
-                    <div className="detail-item">
-                      <Clock size={16} />
-                      <span>Time:</span>
-                      <span>{formatTime(selectedAppointment.time)}</span>
-                    </div>
-                    <div className="detail-item">
-                      <span>Status:</span>
-                      <span 
-                        className="status-text"
-                        style={{ color: getStatusColor(selectedAppointment.status) }}
-                      >
-                        {selectedAppointment.status || 'Unknown'}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="detail-section">
-                  <h3>Patient Information</h3>
-                  <div className="detail-grid">
-                    <div className="detail-item">
-                      <User size={16} />
-                      <span>Name:</span>
-                      <span>{selectedAppointment.patientId?.name || 'Unknown'}</span>
-                    </div>
-                    <div className="detail-item">
-                      <Mail size={16} />
-                      <span>Email:</span>
-                      <span>{selectedAppointment.patientId?.email || 'No email'}</span>
-                    </div>
-                    <div className="detail-item">
-                      <Phone size={16} />
-                      <span>Phone:</span>
-                      <span>{selectedAppointment.patientId?.phone || 'No phone'}</span>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="detail-section">
-                  <h3>Doctor Information</h3>
-                  <div className="detail-grid">
-                    <div className="detail-item">
-                      <Stethoscope size={16} />
-                      <span>Name:</span>
-                      <span>{selectedAppointment.doctorId?.name || 'Unknown'}</span>
-                    </div>
-                    <div className="detail-item">
-                      <Mail size={16} />
-                      <span>Email:</span>
-                      <span>{selectedAppointment.doctorId?.email || 'No email'}</span>
-                    </div>
-                    <div className="detail-item">
-                      <span>Specialization:</span>
-                      <span>{selectedAppointment.doctorId?.specialization || 'No specialization'}</span>
-                    </div>
-                  </div>
-                </div>
-                
-                {selectedAppointment.notes && (
-                  <div className="detail-section">
-                    <h3>Notes</h3>
-                    <div className="notes-content">
-                      <p>{selectedAppointment.notes}</p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-            
-            <div className="modal-footer">
-              <button 
-                className="btn btn-secondary"
-                onClick={() => setShowViewModal(false)}
-              >
-                Close
-              </button>
-              <button 
-                className="btn btn-primary"
-                onClick={() => {
-                  setShowViewModal(false);
-                  openEditModal(selectedAppointment);
-                }}
-              >
-                Edit Appointment
-              </button>
-            </div>
-          </div>
+            </motion.div>
+          ))}
         </div>
       )}
 
@@ -705,8 +620,91 @@ const Appointment = () => {
           </div>
         </div>
       )}
-    </div>
+      </AnimatePresence>
+
+      {/* Edit Appointment Modal */}
+      {showEditModal && selectedAppointment && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold">Edit Appointment</h2>
+              <button 
+                className="text-gray-500 hover:text-gray-700"
+                onClick={() => setShowEditModal(false)}
+              >
+                ×
+              </button>
+            </div>
+            
+            <form onSubmit={handleUpdateAppointment} className="space-y-4">
+              <div className="form-group">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Status *</label>
+                <select
+                  name="status"
+                  value={formData.status}
+                  onChange={handleInputChange}
+                  className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  required
+                >
+                  <option value="">Select Status</option>
+                  <option value="scheduled">Scheduled</option>
+                  <option value="confirmed">Confirmed</option>
+                  <option value="completed">Completed</option>
+                  <option value="cancelled">Cancelled</option>
+                  <option value="no-show">No Show</option>
+                </select>
+              </div>
+              
+              <div className="form-group">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                <textarea
+                  name="notes"
+                  value={formData.notes}
+                  onChange={handleInputChange}
+                  className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  rows="3"
+                  placeholder="Add any additional notes..."
+                ></textarea>
+              </div>
+              
+              <div className="flex justify-end space-x-2 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowEditModal(false)}
+                  className="px-4 py-2 border rounded-md text-gray-700 hover:bg-gray-100"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                >
+                  Update Appointment
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </motion.div>
   );
 };
+
+// Add styles for the skeleton loading animation
+const styleElement = document.createElement('style');
+styleElement.textContent = `
+  @keyframes shimmer {
+    0% { background-position: -468px 0; }
+    100% { background-position: 468px 0; }
+  }
+
+  .skeleton-line {
+    background: linear-gradient(to right, #f6f7f8 8%, #e9ebee 18%, #f6f7f8 33%);
+    background-size: 800px 104px;
+    animation: shimmer 1.5s infinite linear;
+    border-radius: 4px;
+  }
+`;
+document.head.appendChild(styleElement);
 
 export default Appointment;

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
+import { useNavigate } from 'react-router-dom';
 import { adminAPI } from '../../../services/api';
 import { 
   Search, 
@@ -20,6 +21,7 @@ import {
 import './ManageDoctors.css';
 
 const ManageDoctors = () => {
+  const navigate = useNavigate();
   const [doctors, setDoctors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -223,9 +225,38 @@ const ManageDoctors = () => {
   if (loading) {
     return (
       <div className="manage-doctors-container">
-        <div className="loading-spinner">
-          <div className="spinner"></div>
-          <p>Loading doctors...</p>
+        <div className="skeleton-header">
+          <div className="skeleton-title"></div>
+          <div className="skeleton-subtitle"></div>
+        </div>
+        
+        <div className="skeleton-search-filter">
+          <div className="skeleton-search"></div>
+          <div className="skeleton-filters">
+            <div className="skeleton-filter"></div>
+            <div className="skeleton-filter"></div>
+          </div>
+        </div>
+        
+        <div className="doctors-grid">
+          {[1, 2, 3, 4, 5, 6].map((item) => (
+            <div key={item} className="skeleton-doctor-card">
+              <div className="skeleton-avatar"></div>
+              <div className="skeleton-status"></div>
+              <div className="skeleton-content">
+                <div className="skeleton-line name"></div>
+                <div className="skeleton-line specialization"></div>
+                <div className="skeleton-line"></div>
+                <div className="skeleton-line"></div>
+                <div className="skeleton-line"></div>
+                <div className="skeleton-line fee"></div>
+              </div>
+              <div className="skeleton-actions">
+                <div className="skeleton-button"></div>
+                <div className="skeleton-button"></div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     );
@@ -245,13 +276,6 @@ const ManageDoctors = () => {
           >
             <Download size={16} />
             Refresh
-          </button>
-          <button 
-            className="btn btn-primary"
-            onClick={() => setShowAddModal(true)}
-          >
-            <Plus size={16} />
-            Add Doctor
           </button>
         </div>
       </div>

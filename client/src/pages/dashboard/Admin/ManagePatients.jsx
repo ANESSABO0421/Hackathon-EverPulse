@@ -16,8 +16,34 @@ import {
   Heart,
   Activity,
   AlertCircle,
-  CheckCircle
+  CheckCircle,
+  Loader2,
+  RefreshCw
 } from 'lucide-react';
+
+// Skeleton Loader Component
+const PatientCardSkeleton = () => (
+  <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden transition-all duration-200 hover:shadow-md animate-pulse">
+    <div className="p-6">
+      <div className="flex items-start space-x-4">
+        <div className="h-12 w-12 rounded-full bg-gray-200"></div>
+        <div className="flex-1 space-y-2">
+          <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+          <div className="h-3 bg-gray-100 rounded w-1/2"></div>
+        </div>
+      </div>
+      <div className="mt-4 space-y-2">
+        <div className="h-3 bg-gray-100 rounded w-full"></div>
+        <div className="h-3 bg-gray-100 rounded w-5/6"></div>
+        <div className="h-3 bg-gray-100 rounded w-2/3"></div>
+      </div>
+      <div className="mt-4 pt-4 border-t border-gray-100 flex justify-between">
+        <div className="h-8 w-24 bg-gray-200 rounded-md"></div>
+        <div className="h-8 w-8 bg-gray-200 rounded-full"></div>
+      </div>
+    </div>
+  </div>
+);
 import './ManagePatients.css';
 
 const ManagePatients = () => {
@@ -330,74 +356,111 @@ const ManagePatients = () => {
 
   if (loading) {
     return (
-      <div className="manage-patients-container">
-        <div className="loading-spinner">
-          <div className="spinner"></div>
-          <p>Loading patients...</p>
+      <div className="p-6">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-800">Manage Patients</h1>
+            <p className="text-gray-500 mt-1">Loading patient data...</p>
+          </div>
+          <div className="mt-4 md:mt-0 flex space-x-3">
+            <div className="h-10 w-24 bg-gray-200 rounded-md"></div>
+            <div className="h-10 w-32 bg-blue-200 rounded-md"></div>
+          </div>
+        </div>
+        
+        <div className="bg-white rounded-xl shadow-sm p-4 mb-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="relative flex-1">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search className="h-5 w-5 text-gray-400" />
+              </div>
+              <div className="h-10 bg-gray-100 rounded-lg w-full pl-10"></div>
+            </div>
+            <div className="flex space-x-2">
+              <div className="h-10 w-32 bg-gray-100 rounded-lg"></div>
+              <div className="h-10 w-40 bg-gray-100 rounded-lg"></div>
+            </div>
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[1, 2, 3, 4, 5, 6].map((item) => (
+            <PatientCardSkeleton key={item} />
+          ))}
         </div>
       </div>
     );
   }
 
   return (
-    <div className="manage-patients-container">
-      <div className="patients-header">
-        <div className="header-left">
-          <h1>Manage Patients</h1>
-          <p>Manage patient profiles and medical information</p>
+    <div className="p-6">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-800">Manage Patients</h1>
+          <p className="text-gray-500 mt-1">
+            {filteredPatients.length} {filteredPatients.length === 1 ? 'patient' : 'patients'} found
+          </p>
         </div>
-        <div className="header-actions">
+        <div className="mt-4 md:mt-0 flex space-x-3">
           <button 
-            className="btn btn-secondary"
+            className="flex items-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
             onClick={() => fetchPatients()}
+            disabled={loading}
           >
-            <Download size={16} />
+            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
             Refresh
           </button>
           <button 
-            className="btn btn-primary"
+            className="flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
             onClick={() => setShowAddModal(true)}
           >
-            <Plus size={16} />
+            <Plus className="h-4 w-4 mr-2" />
             Add Patient
           </button>
         </div>
       </div>
 
       {/* Search and Filter Bar */}
-      <div className="search-filter-bar">
-        <div className="search-box">
-          <Search size={20} />
-          <input
-            type="text"
-            placeholder="Search patients by name, email, phone, blood group..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-        
-        <div className="filter-controls">
-          <select 
-            value={filterBy} 
-            onChange={(e) => setFilterBy(e.target.value)}
-          >
-            <option value="all">All Patients</option>
-            <option value="male">Male</option>
-            <option value="female">Female</option>
-            <option value="other">Other</option>
-            <option value="with_conditions">With Chronic Conditions</option>
-            <option value="with_allergies">With Allergies</option>
-          </select>
+      <div className="bg-white rounded-xl shadow-sm p-4 mb-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="relative flex-1">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Search className="h-5 w-5 text-gray-400" />
+            </div>
+            <input
+              type="text"
+              className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+              placeholder="Search patients by name, email, phone..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
           
-          <select 
-            value={sortBy} 
-            onChange={(e) => setSortBy(e.target.value)}
-          >
-            <option value="name">Sort by Name</option>
-            <option value="age">Sort by Age</option>
-            <option value="registration">Sort by Registration</option>
-            <option value="bloodGroup">Sort by Blood Group</option>
-          </select>
+          <div className="flex flex-wrap gap-2">
+            <select
+              className="block w-full pl-3 pr-8 py-2 text-base border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-lg"
+              value={filterBy}
+              onChange={(e) => setFilterBy(e.target.value)}
+            >
+              <option value="all">All Patients</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="other">Other</option>
+              <option value="with_conditions">With Conditions</option>
+              <option value="with_allergies">With Allergies</option>
+            </select>
+            
+            <select
+              className="block w-full pl-3 pr-8 py-2 text-base border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-lg"
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+            >
+              <option value="name">Sort by Name</option>
+              <option value="age">Sort by Age</option>
+              <option value="registration">Sort by Registration</option>
+              <option value="bloodGroup">Sort by Blood Group</option>
+            </select>
+          </div>
         </div>
       </div>
 
