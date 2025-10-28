@@ -38,7 +38,7 @@ export default function DoctorSignup() {
         consultationFee: Number(formData.consultationFee),
       };
 
-      await axios.post("http://localhost:3000/api/doctors/signup", payload);
+      await axios.post("https://hackathon-everpulse.onrender.com/api/doctors/signup", payload);
       toast.success("Doctor registered successfully!");
       navigate("/login");
     } catch (err) {

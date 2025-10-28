@@ -23,7 +23,7 @@ export default function PatientSignup() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post("http://localhost:3000/api/patients/signup", formData);
+      await axios.post("https://hackathon-everpulse.onrender.com/api/patients/signup", formData);
       toast.success("Patient registered successfully!");
       navigate("/login");
     } catch (err) {

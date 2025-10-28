@@ -22,7 +22,7 @@ export default function AdminSignup() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post("http://localhost:3000/api/admins/signup", formData);
+      await axios.post("https://hackathon-everpulse.onrender.com/api/admins/signup", formData);
       toast.success("🎉 Admin registered successfully!");
       navigate("/login");
     } catch (err) {
